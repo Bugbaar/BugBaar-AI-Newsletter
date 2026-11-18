@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: bugbaar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bugbaar
+      POSTGRES_USER: bugbaar
+      POSTGRES_PASSWORD: bugbaar_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - bugbaar_postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    container_name: bugbaar-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://bugbaar:bugbaar_password@postgres:5432/bugbaar
+      APP_NAME: BugBaar AI Newsletter
+      ENVIRONMENT: production
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: bugbaar-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  bugbaar_postgres_data:
